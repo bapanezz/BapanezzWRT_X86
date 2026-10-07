@@ -61,8 +61,9 @@ jobs:
     - name: Organize Files
       id: organize
       run: |
-        cd openwrt/bin/targets/*/*
+        cd openwrt/bin/targets/x86/64
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
+        echo "tag=OpenWrt-24.10-x86-$(date +%Y%m%d)" >> $GITHUB_ENV
         echo "status=success" >> $GITHUB_ENV
 
     - name: Upload Firmware to Artifacts
@@ -70,4 +71,19 @@ jobs:
       if: steps.organize.outputs.status == 'success'
       with:
         name: OpenWrt-24.10-x86-Firmware
-        path: ${{ env.FIRMWARE }}
+        path: ${{ env.FIRMWARE }}/*
+
+    - name: Create Release & Upload Files
+      uses: softprops/action-gh-release@v2
+      if: steps.organize.outputs.status == 'success'
+      with:
+        tag_name: ${{ env.tag }}
+        name: OpenWrt 24.10 x86 - USB Modem & Tethering Support
+        body: |
+          Firmware OpenWrt 24.10 x86 Custom build:
+          - Support USB Tethering (usb0 / rndis / ncm)
+          - Support USB Modem (QMI / MBIM / WWAN)
+          - Support USB LAN (rtl8152, dll)
+        files: ${{ env.FIRMWARE }}/*
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
